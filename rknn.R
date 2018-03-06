@@ -1,7 +1,11 @@
 
-### ---------------------------------------------------------------------
-### K-NN DiagnÃ³stico de Diabetes
-### ---------------------------------------------------------------------
+### ---------------------------------------------------------------------------
+### Título: Classificação Preditiva com algoritmo k-NN
+### Descrição: Utilização do algoritmo k-NN para classificação preditiva em dados de diagnóstico de diabetes
+### Autor: Ricardo Avancini
+### e-mail: avancini.rf@gmail.com
+### Repositório: https://github.com/avancinirf/rknn
+### ---------------------------------------------------------------------------
 
 # Weka DataSet
 # http://www.technologyforge.net/Datasets/
@@ -9,6 +13,43 @@
 
 #install.packages('class')
 #require('class')
+
+
+
+# Verificando e instalando um pacote com TryCatch
+tryCatch({
+  find.package('class')
+}, warning = function(w) {
+}, error = function(e) {
+  install.packages('class')
+}, finally = {
+  require('class')
+})
+
+# Verificando e instalando um único pacote
+if (!require("class")) install.packages("class")
+
+
+# Exemplo de uso do setdiff()
+a<-c("a", "b", "c","e")
+b<-c("a","b","j","k")
+setdiff(a, b) # o que tem no primeiro e não no segundo
+
+
+# verificando e instalando multiplos pacotes
+packages = c("dismo", "rgdal", "raster", "randomForest", "kernlab")
+for (p in setdiff(packages, installed.packages()[, "Package"])) {
+  install.packages(p, dependencies = T)
+}
+
+
+
+
+
+
+
+
+
 
 
 # Selecionando o diretorio raiz para o script
