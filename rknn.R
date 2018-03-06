@@ -2,6 +2,7 @@
 ### ---------------------------------------------------------------------------
 ### Título: Classificação Preditiva com algoritmo k-NN
 ### Descrição: Utilização do algoritmo k-NN para classificação preditiva em dados de diagnóstico de diabetes
+### realizando testes para identificar os melhores parâmetros (k e tabela com dados normalizados ou não)
 ### Autor: Ricardo Avancini
 ### e-mail: avancini.rf@gmail.com
 ### Repositório: https://github.com/avancinirf/rknn
@@ -10,139 +11,55 @@
 # Weka DataSet
 # http://www.technologyforge.net/Datasets/
 
-
-#install.packages('class')
-#require('class')
-
-
-
-# Verificando e instalando um pacote com TryCatch
-tryCatch({
-  find.package('class')
-}, warning = function(w) {
-}, error = function(e) {
-  install.packages('class')
-}, finally = {
-  require('class')
-})
-
 # Verificando e instalando um único pacote
 if (!require("class")) install.packages("class")
+require('class')
 
-
-# Exemplo de uso do setdiff()
-a<-c("a", "b", "c","e")
-b<-c("a","b","j","k")
-setdiff(a, b) # o que tem no primeiro e não no segundo
-
-
-# verificando e instalando multiplos pacotes
-packages = c("dismo", "rgdal", "raster", "randomForest", "kernlab")
-for (p in setdiff(packages, installed.packages()[, "Package"])) {
-  install.packages(p, dependencies = T)
-}
-
-
-
-
-
-
-
-
-
-
+# Importando a Função de Normalização (rnorm) do GitHub
+source("https://raw.githubusercontent.com/avancinirf/rnorm/master/rnorm.R")
 
 # Selecionando o diretorio raiz para o script
-setwd("C:/Users/Ricardo/Documents/SITE_POSTS/KNN")
+setwd("C:/Users/Ricardo/Documents/SITE_POSTS/KNN/rknn")
 #getwd()
 
-# Carregando arquivo CSV com os dados de cogumelos
-original <- as.data.frame(read.table("DiabetesDiagnosis.csv", header=FALSE, sep=",", stringsAsFactors=FALSE)) 
+# Carregando arquivo CSV com os dados de diagnóstico de diabetes
+original <- as.data.frame(read.table("data/DiabetesDiagnosis.csv", header=TRUE, sep=",", stringsAsFactors=FALSE)) 
 
-# Criar data.framepara normalizar (sem cabeÃ§alho = 1 linha)
-normalizado <- original[2:769,]
+# Criar data.frame normalizado usando a função rnorm
+normalizado <- rnorm("data/DiabetesDiagnosis.csv")
 
-# Converter em numeric (double)
-for(i in 1:8){
-  normalizado[,i] <- as.numeric(normalizado[,i])  
-}
+# Contadores para gerar a estatística dos melhores parâmetros de predição
+melhor_sn=0 # Valor do K que obteve maior valor de predição sem normalização
+taxa_sn=0 # Taxa de acerto (%) para o K que obteve maior valor de predição sem normalização
+melhor_n=0 # Valor do K que obteve maior valor de predição com normalização
+taxa_n=0 # Taxa de acerto (%) para o K que obteve maior valor de predição com normalização
 
-
-
-# normalizado = x â€“ Min(X)) / (Max(X) â€“ Min(X)
-for (j in 1:8){
-  min = 0
-  max = 0
-  for (i in 1:nrow(normalizado)){
-    if(normalizado[i,j] > max){max <- normalizado[i,j]}
-    if(normalizado[i,j] < min){min <- normalizado[i,j]}
-  }
-  for (i in 1:nrow(normalizado)){
-    normalizado[i,j]<-((normalizado[i,j]-min)/(max-min))
-  }
-}
-
-
-# Criando as variÃ¡veis para executar a funÃ§Ã£o K-NN
-# Usando dados originais, sem normalizaÃ§Ã£o
-treinamento_sn<-original[2:709, 1:8]
-rotulo_sn<-original[2:709, 9:9]
-teste_sn<-original[710:769, 1:8]
-estimado_sn <- as.data.frame(knn(treinamento_sn, teste_sn, rotulo_sn, 20)) 
-
-# Criando as variÃ¡veis para executar a funÃ§Ã£o K-NN
-# Usando dados normalizados
-treinamento_n<-normalizado[1:708, 1:8]
-rotulo_n<-normalizado[1:708, 9:9]
-teste_n<-normalizado[709:768, 1:8]
-estimado_n <- as.data.frame(knn(treinamento_n, teste_n, rotulo_n, 20)) 
-
-# CriaÃ§Ã£o de um data.frame para armazenar resultado (ainda nÃ£o foi testado)
-resultado <-as.data.frame(original[710:769, 9])
-resultado[,2]<-as.data.frame(estimado_sn[, 1])
-resultado[,3]<-as.data.frame(estimado_n[, 1])
-
-total_sn<-0
-total_n<-0
- 
-# for(i in 1:nrow(resultado)){
-#   if(resultado[i,1] == resultado[i,2]){
-#     total_sn<-total_sn+1
-#   }
-#   if(resultado[i,1] == resultado[i,3]){
-#     total_n<-total_n+1
-#   }
-# }
-# taxa_sn<-total_sn/nrow(resultado)*100
-# taxa_n<-total_n/nrow(resultado)*100
-#   
-# print(paste0("Total de casos analisados: ",nrow(resultado)))
-# print(paste0("Acertos sem normalizaÃ§Ã£o: ", total_sn, " = ", taxa_sn,"%"))
-# print(paste0("Acertos sem normalizaÃ§Ã£o: ", total_n, " = ", taxa_n,"%"))
-
-melhor_sn=0
-melhor_n=0
-taxa_sn=0
-taxa_n=0
-
+# Loop para testar 200 possibilidades de valores para K, indo de 1 até 200
 for(i in 1:200){
-  
-  estimado_sn <- as.data.frame(knn(treinamento_sn, teste_sn, rotulo_sn, i)) 
-  estimado_n <- as.data.frame(knn(treinamento_n, teste_n, rotulo_n, i)) 
 
+  # Gera as variáveis de treinamento, teste e os rótulos para os dados com normalização
   treinamento_n<-normalizado[1:708, 1:8]
   rotulo_n<-normalizado[1:708, 9:9]
   teste_n<-normalizado[709:768, 1:8]
   
-  # CriaÃ§Ã£o de um data.frame para armazenar resultado (ainda nÃ£o foi testado)
-  resultado <-as.data.frame(original[710:769, 9])
+  # Gera as variáveis de treinamento, teste e os rótulos para os dados sem normalização
+  treinamento_sn<-original[1:708, 1:8]
+  rotulo_sn<-original[1:708, 9:9]
+  teste_sn<-original[709:768, 1:8]
+  
+  estimado_sn <- as.data.frame(knn(treinamento_sn, teste_sn, rotulo_sn, i)) # Executa o algoritmo k-NN com K=i sem normalização
+  estimado_n <- as.data.frame(knn(treinamento_n, teste_n, rotulo_n, i)) # Executa o algoritmo k-NN com K=i com normalização
+  
+  # Criação de um data.frame para armazenar resultado
+  resultado <-as.data.frame(original[709:768, 9])
   resultado[,2]<-as.data.frame(estimado_sn[, 1])
   resultado[,3]<-as.data.frame(estimado_n[, 1])
-  
-  
+
+  # Variáveis para armazenar o total de acertos com e sem normalização
   total_sn=0
   total_n=0
   
+  # Loop para conferir os resultados e armazenar o total de acertos nas variáveis
   for(j in 1:nrow(resultado)){
     if(resultado[j,1] == resultado[j,2]){
       total_sn=total_sn+1
@@ -165,9 +82,24 @@ for(i in 1:200){
   }
 }
 
+# Condição para verificar qual foi o K mais eficiente e em qual tabela de dados e 
+# armazena o resultado em uma variável k para rodar novamente o algoritmo k-NN com o valor
+# adequado de K e na tabela mais apropriada (normalizada ou não)
+if(taxa_sn>=taxa_n){
+  k<-melhor_sn # Parâmetro otimizado para rodar a função knn final
+  parametros <- paste0("Melhor resultado 'Sem Normalização' e k=",k) # Salvando resultados dos parâmetros selecionados
+  estimado <- as.data.frame(knn(treinamento_sn, teste_sn, rotulo_sn, k)) 
+  
+}else{
+  k<-melhor_n # Parâmetro otimizado para rodar a função knn final
+  parametros <- paste0("Melhor resultado 'Com Normalização' e k=",k) # Salvando resultados dos parâmetros selecionados
+  estimado <- as.data.frame(knn(treinamento_n, teste_n, rotulo_n, k))  
+}
+
+
+# Imprime o resultado final do script
 print(paste0("K(sn) = ", melhor_sn, ", taxa: ", taxa_sn))
 print(paste0("K(n) = ", melhor_n, ", taxa: ", taxa_n))
-
-
-
+print(parametros) # Imprime os parâmetros otimizados que foram usados
+estimado # Lista contendo o resultado da predição para os casos de teste
 
